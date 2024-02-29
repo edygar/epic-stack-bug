@@ -12,6 +12,7 @@ import {
 	useActionData,
 	useLoaderData,
 	type MetaFunction,
+	type Params,
 } from '@remix-run/react'
 import { formatDistanceToNow } from 'date-fns'
 import { z } from 'zod'
@@ -29,7 +30,16 @@ import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { userHasPermission, useOptionalUser } from '#app/utils/user.ts'
 import { type loader as notesLoader } from './notes.tsx'
 
+async function requireEndingWithANumber(params: Params<string>) {
+	if (!params.noteId?.endsWith('1')) {
+		throw redirectWithToast(`/users/${params.username}/notes`, {
+			title: "It doesn't end with the number",
+			description: 'The note id must end with a number',
+		})
+	}
+}
 export async function loader({ params }: LoaderFunctionArgs) {
+	await requireEndingWithANumber(params)
 	const note = await prisma.note.findUnique({
 		where: { id: params.noteId },
 		select: {
